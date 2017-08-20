@@ -46,24 +46,30 @@ namespace InvisibleWalls
 
             Console.WriteLine("Launch game...");
             _process = _spyMgr.CreateProcess(@"G:\Games\The Ball\Binaries\Win32\TheBall.exe", true, out continueevent);
+            if (_process == null)
+                throw new Exception("Game launch failed.");
 
 
-            Console.WriteLine("Connect native plugin...");
-            int result = _spyMgr.LoadCustomDll(_process, @".\CRegistryPlugin.dll", false, false);
+            Console.WriteLine("Load native plugin...");
+            int result = _spyMgr.LoadCustomDll(_process, @".\NativePlugin.dll", false, false);
+            if (result < 0)         // This returns result=1/S_FALSE, which I think means that the Agent was loaded.
+                throw new Exception("Could not load NativePlugin DLL.");
+                
 
-
+            // Connect via IPC using a named pipe, and fetch the address of the CreateDevice routine from 
+            // the native plugin.  That address is fetched from the running game, during the DLLMain of the plugin.
+            // ToDo: What happens in 64 bit?
+            Console.WriteLine("Fetch address from Pipe...");
+            byte[] byteAddress = new byte[4];
             pipe = new NamedPipeClientStream(".", "HyperPipe32", PipeDirection.InOut);
             pipe.Connect();
+            pipe.Read(byteAddress, 0, 4);
 
-            byte[] data = new byte[4];
-            pipe.Read(data, 0, 4);
-            Int32 address = BitConverter.ToInt32(data, 0);
-
-
-            Console.WriteLine("Hook the d3d9.dll!CreatDevice...");
-            NktHook hook = _spyMgr.CreateHookForAddress((IntPtr)address, "D3D9.DLL!CreateDevice", (int)(eNktHookFlags.flgRestrictAutoHookToSameExecutable | eNktHookFlags.flgOnlyPostCall | eNktHookFlags.flgDontCheckAddress));
-            // hook.AddCustomHandler(@"..\..\..\Plugin\bin\Plugins\CRegistryPlugin.dll", 0, "");
-            hook.AddCustomHandler(@".\CRegistryPlugin.dll", 0, "");
+            Console.WriteLine("Hook the d3d9.dll!CreateDevice...");
+            Int32 addrCreateDevice = BitConverter.ToInt32(byteAddress, 0);
+            NktHook hook = _spyMgr.CreateHookForAddress((IntPtr)addrCreateDevice, "D3D9.DLL!CreateDevice", 
+                (int)(eNktHookFlags.flgRestrictAutoHookToSameExecutable | eNktHookFlags.flgOnlyPostCall | eNktHookFlags.flgDontCheckAddress));
+            hook.AddCustomHandler(@".\NativePlugin.dll", 0, "");
 
             hook.Attach(_process, true);
             hook.Hook(true);

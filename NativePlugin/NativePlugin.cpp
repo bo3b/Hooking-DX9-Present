@@ -78,7 +78,7 @@ extern "C" HRESULT WINAPI OnFunctionCall(__in INktHookInfo *lpHookInfo, __in DWO
 	INktParam* param = nullptr;
 	for (int i = 0; i < paramCount; i++)
 	{
-		paramsEnum->GetAt(i, &param);
+		paramsEnum->GetAt(i, &param);  /// leaves it at the last one.
 	}
 
 	param->get_PointerVal(&pointeraddress);
