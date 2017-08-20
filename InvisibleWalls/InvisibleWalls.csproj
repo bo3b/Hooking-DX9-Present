@@ -51,19 +51,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-    <None Include="Dependencies\deviare32.db" />
-    <None Include="Dependencies\deviare64.db" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Dependencies\DeviareCOM.dll" />
-    <Content Include="Dependencies\DeviareCOM.pdb" />
-    <Content Include="Dependencies\DeviareCOM64.dll" />
-    <Content Include="Dependencies\DeviareCOM64.pdb" />
-    <Content Include="Dependencies\DvAgent.dll" />
-    <Content Include="Dependencies\DvAgent.pdb" />
-    <Content Include="Dependencies\DvAgent64.dll" />
-    <Content Include="Dependencies\DvAgent64.pdb" />
-    <Content Include="Dependencies\Nektra.Deviare2.dll" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
