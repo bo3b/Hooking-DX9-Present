@@ -25,6 +25,8 @@
 
 //#include <objbase.h>
 
+LPVOID __stdcall GetPresentAddr(LPVOID pD3D);
+LPVOID __stdcall GetCreateAddr(LPVOID pD3D);
 
 
 

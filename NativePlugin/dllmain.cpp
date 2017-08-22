@@ -36,39 +36,80 @@
 
 BOOL APIENTRY DllMain(__in HMODULE hModule, __in DWORD ulReasonForCall, __in LPVOID lpReserved)
 {
-	DebugBreak();
-
 	switch (ulReasonForCall)
 	{
-	case DLL_PROCESS_ATTACH:
-	{
-		HANDLE hPipe = ::CreateNamedPipe(L"\\\\.\\pipe\\HyperPipe32",
-			PIPE_ACCESS_DUPLEX,
-			PIPE_TYPE_BYTE | PIPE_READMODE_BYTE,
-			PIPE_UNLIMITED_INSTANCES,
-			4096,
-			4096,
-			0,
-			NULL);
+		case DLL_PROCESS_ATTACH:
+		{
+			//HANDLE hPipe = ::CreateNamedPipe(L"\\\\.\\pipe\\HyperPipe32",
+			//	PIPE_ACCESS_DUPLEX,
+			//	PIPE_TYPE_BYTE | PIPE_READMODE_BYTE,
+			//	PIPE_UNLIMITED_INSTANCES,
+			//	4096,
+			//	4096,
+			//	0,
+			//	NULL);
 
-		ConnectNamedPipe(hPipe, NULL);
+			//ConnectNamedPipe(hPipe, NULL);
 
 
-		LPDIRECT3D9 g_pD3D = NULL;
-		g_pD3D = Direct3DCreate9(D3D_SDK_VERSION);
+			//IDirect3D9* g_pD3D = NULL;
+			//g_pD3D = Direct3DCreate9(D3D_SDK_VERSION);
 
-		LPVOID addrCreateDevice = g_pD3D->lpVtbl->CreateDevice;
-		DWORD bytesWritten = 0;
-		WriteFile(hPipe, &addrCreateDevice, sizeof(LPVOID), &bytesWritten, NULL);
+			//IDirect3DDevice9* g_pDevice9;
+			//D3DPRESENT_PARAMETERS presParams = {};
+			//LPVOID addrCreateDevice = nullptr;
+			//LPVOID addrPresent = nullptr;
+			//presParams.BackBufferWidth = 1600;
+			//presParams.BackBufferHeight = 1200;
+			//presParams.BackBufferFormat = D3DFMT_UNKNOWN;
+			//presParams.SwapEffect = D3DSWAPEFFECT_DISCARD;
+			//presParams.Windowed = true;
+			//HRESULT hres = g_pD3D->lpVtbl->CreateDevice(g_pD3D, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, 
+			//	GetActiveWindow(), D3DCREATE_HARDWARE_VERTEXPROCESSING, &presParams, &g_pDevice9);
+			//if (SUCCEEDED(hres))
+			//{
+			//	addrCreateDevice = g_pD3D->lpVtbl->CreateDevice;
+			//	addrPresent= g_pDevice9->lpVtbl->Present;
+			//}
 
-		//CreateThread(NULL, NULL, MyThread, NULL, NULL, NULL);
+			//DWORD bytesWritten = 0;
+			//WriteFile(hPipe, &addrPresent, sizeof(LPVOID), &bytesWritten, NULL);
 
-		break;
-	}
-	case DLL_THREAD_ATTACH:
-	case DLL_THREAD_DETACH:
-	case DLL_PROCESS_DETACH:
-		break;
+			//CreateThread(NULL, NULL, MyThread, NULL, NULL, NULL);
+
+			break;
+		}
+		case DLL_THREAD_ATTACH:
+		case DLL_THREAD_DETACH:
+		case DLL_PROCESS_DETACH:
+			break;
 	}
 	return TRUE;
+}
+
+LPVOID __stdcall GetPresentAddr(LPVOID pD3D)
+{
+	IDirect3D9* pD = (IDirect3D9*)pD3D;
+	IDirect3DDevice9* g_pDevice9;
+	D3DPRESENT_PARAMETERS presParams = {};
+	LPVOID addrCreateDevice = nullptr;
+	LPVOID addrPresent = nullptr;
+	presParams.BackBufferWidth = 1600;
+	presParams.BackBufferHeight = 1200;
+	presParams.BackBufferFormat = D3DFMT_UNKNOWN;
+	presParams.SwapEffect = D3DSWAPEFFECT_DISCARD;
+	presParams.Windowed = true;
+	HRESULT hres = pD->lpVtbl->CreateDevice(pD, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
+		GetActiveWindow(), D3DCREATE_HARDWARE_VERTEXPROCESSING, &presParams,
+		&g_pDevice9);
+	if (SUCCEEDED(hres))
+		return g_pDevice9->lpVtbl->Present;
+	else
+		return nullptr;
+}
+
+LPVOID __stdcall GetCreateAddr(LPVOID pD3D)
+{
+	IDirect3D9* pD = (IDirect3D9*)pD3D;
+	return pD->lpVtbl->CreateDevice;
 }
