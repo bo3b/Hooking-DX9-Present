@@ -42,69 +42,71 @@ namespace InvisibleWalls
                 throw new Exception("Deviare initialization error.");
 
             // For any hook that is called using this SpyMgr, let us know.
-            _spyMgr.OnFunctionCalled += new DNktSpyMgrEvents_OnFunctionCalledEventHandler(OnFunctionCalled);
+            //_spyMgr.OnFunctionCalled += new DNktSpyMgrEvents_OnFunctionCalledEventHandler(OnFunctionCalled);
 
 
             // Launch the game, but suspended, so we can hook our first call and be certain to catch it.
             Console.WriteLine("Launch game...");
-            _gameProcess = _spyMgr.CreateProcess(@"G:\Games\The Ball\Binaries\Win32\TheBall.exe", true, out continueevent);
+            _gameProcess = _spyMgr.CreateProcess(@"G:\Games\limbo\limbo.exe", false, out continueevent);
             if (_gameProcess == null)
                 throw new Exception("Game launch failed.");
 
-            Console.WriteLine("Load native plugin...");
-            int result = _spyMgr.LoadCustomDll(_gameProcess, @".\NativePlugin.dll", false, false);
-            if (result < 0)         // This returns result=1/S_FALSE, which I think means that the Agent was loaded.
-                throw new Exception("Could not load NativePlugin DLL.");
-
+            //Console.WriteLine("Load native plugin...");
+            //int result = _spyMgr.LoadCustomDll(_gameProcess, @".\NativePlugin.dll", true, true);
+            //if (result < 0)         // This returns result=1/S_FALSE, which I think means that the Agent was loaded.
+            //    throw new Exception("Could not load NativePlugin DLL.");
 
             // Hook the primary DX9 creation call of Direct3DCreate9, which is a direct export of the DLL
-            Console.WriteLine("Hook the D3D9.DLL!Direct3DCreate9...");
-            NktHook d3dHook = _spyMgr.CreateHook("D3D9.DLL!Direct3DCreate9",
-                (int)(eNktHookFlags.flgRestrictAutoHookToSameExecutable | eNktHookFlags.flgOnlyPostCall | eNktHookFlags.flgDontCheckAddress));
-            if (d3dHook == null)
-                throw new Exception("Failed to hook D3D9.DLL!Direct3DCreate9");
+            //Console.WriteLine("Hook the D3D9.DLL!Direct3DCreate9...");
+            //NktHook d3dHook = _spyMgr.CreateHook("D3D9.DLL!Direct3DCreate9",
+            //    (int)(eNktHookFlags.flgRestrictAutoHookToSameExecutable | 
+            //    eNktHookFlags.flgOnlyPostCall | 
+            //    eNktHookFlags.flgDontCheckAddress |
+            //    eNktHookFlags.flgAsyncCallbacks));
+            //if (d3dHook == null)
+            //    throw new Exception("Failed to hook D3D9.DLL!Direct3DCreate9");
 
-            // Make sure the CustomHandler in the NativePlugin gets called when this object is created.
-            // At that point, the native code will take over.
-            d3dHook.AddCustomHandler(@".\NativePlugin.dll", (int)eNktHookCustomHandlerFlags.flgChDontCallIfLoaderLocked, "");
+            //// Make sure the CustomHandler in the NativePlugin gets called when this object is created.
+            //// At that point, the native code will take over.
+            //d3dHook.AddCustomHandler(@".\NativePlugin.dll", (int)eNktHookCustomHandlerFlags.flgChDontCallIfLoaderLocked, "");
 
-            d3dHook.Attach(_gameProcess, true);
-            d3dHook.Hook(true);
+            //d3dHook.Attach(_gameProcess, true);
+            //d3dHook.Hook(true);
 
 
             Console.WriteLine("Continue game launch...");
-            _spyMgr.ResumeProcess(_gameProcess, continueevent);
+            //_spyMgr.ResumeProcess(_gameProcess, continueevent);
 
             // Connect via IPC using a named pipe, and fetch the address of the CreateDevice routine from 
             // the native plugin.  That address is fetched from the running game, during the DLLMain of the plugin.
             // This needs to be done after resuming the app, otherwise the pipe is blocked.
             // ToDo: What happens in 64 bit?
-            Console.WriteLine("Fetch address from Pipe...");
-            byte[] byteAddress = new byte[4];
-            pipe = new NamedPipeClientStream(".", "HyperPipe32", PipeDirection.InOut);
-            pipe.Connect();
-            pipe.Read(byteAddress, 0, 4);
+            //Console.WriteLine("Fetch address from Pipe...");
+            //byte[] byteAddress = new byte[4];
+            //pipe = new NamedPipeClientStream(".", "HyperPipe32", PipeDirection.InOut);
+            //pipe.Connect();
+            //pipe.Read(byteAddress, 0, 4);
 
-            Console.WriteLine("Hook the d3d9.dll!CreateDevice...");
-            Int32 addrCreate = BitConverter.ToInt32(byteAddress, 0);
-            if (addrCreate != 0)
-            {
-                NktHook hook = _spyMgr.CreateHookForAddress((IntPtr)addrCreate, "D3D9.DLL!CreateDevice",
-                    (int)(eNktHookFlags.flgRestrictAutoHookToSameExecutable | eNktHookFlags.flgOnlyPostCall | eNktHookFlags.flgDontCheckAddress));
-                hook.AddCustomHandler(@".\NativePlugin.dll", 0, "");
+            //Console.WriteLine("Hook the d3d9.dll!CreateDevice...");
+            //Int32 addrCreate = BitConverter.ToInt32(byteAddress, 0);
+            //if (addrCreate != 0)
+            //{
+            //    NktHook hook = _spyMgr.CreateHookForAddress((IntPtr)addrCreate, "D3D9.DLL!CreateDevice",
+            //        (int)(eNktHookFlags.flgRestrictAutoHookToSameExecutable | eNktHookFlags.flgOnlyPostCall | eNktHookFlags.flgDontCheckAddress));
+            //    hook.AddCustomHandler(@".\NativePlugin.dll", 0, "");
 
-                hook.Attach(_gameProcess, true);
-                hook.Hook(true);
-            }
+            //    hook.Attach(_gameProcess, true);
+            //    hook.Hook(true);
+            //}
 
-            Console.WriteLine("Fetch address of Present from Pipe...");
-            pipe.Read(byteAddress, 0, 4);
-            Int32 addrPresent = BitConverter.ToInt32(byteAddress, 0);
+            //Console.WriteLine("Fetch address of Present from Pipe...");
+            //pipe.Read(byteAddress, 0, 4);
+            //Int32 addrPresent = BitConverter.ToInt32(byteAddress, 0);
 
 
             while (true)
             {
-                
+                System.Threading.Thread.Sleep(1000);
             }
         }
 
