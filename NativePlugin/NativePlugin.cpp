@@ -38,7 +38,7 @@ using namespace Deviare2;
 
 extern "C" HRESULT WINAPI OnLoad()
 {
-//	::OutputDebugStringA("NativePlugin::OnLoad called\n");
+	::OutputDebugStringA("NativePlugin::OnLoad called\n");
 
 	return S_OK;
 }
@@ -80,23 +80,23 @@ HANDLE hPipe = nullptr;
 extern "C" HRESULT WINAPI OnFunctionCall(__in INktHookInfo *lpHookInfo, __in DWORD dwChainIndex,
 	__in INktHookCallInfoPlugin *lpHookCallInfoPlugin)
 {
-//	::OutputDebugString(L"NativePlugin::OnFunctionCall called for ");
+	::OutputDebugString(L"NativePlugin::OnFunctionCall called for ");
 	BSTR name;
 	lpHookInfo->get_FunctionName(&name);
-//	::OutputDebugString(name);
-//	::OutputDebugString(L"\n");
+	::OutputDebugString(name);
+	::OutputDebugString(L"\n");
 
-	HRESULT hres;
-	INktParamsEnum* paramsEnum;
-	long paramCount;
-	long pointeraddress;
+	//HRESULT hres;
+	//INktParamsEnum* paramsEnum;
+	//long paramCount;
+	//long pointeraddress;
 
-	INktParam* nktResult;
-	lpHookCallInfoPlugin->Result(&nktResult);
-	nktResult->get_PointerVal((long*)(&g_pD3D));
+	//INktParam* nktResult;
+	//lpHookCallInfoPlugin->Result(&nktResult);
+	//nktResult->get_PointerVal((long*)(&g_pD3D));
 
-	// Now send that address of the CreateDevice call back to C#
-	LPVOID addrCreate = GetCreateAddr(g_pD3D);
+	//// Now send that address of the CreateDevice call back to C#
+	//LPVOID addrCreate = GetCreateAddr(g_pD3D);
 
 	//hPipe = ::CreateNamedPipe(L"\\\\.\\pipe\\HyperPipe32",
 	//	PIPE_ACCESS_DUPLEX,

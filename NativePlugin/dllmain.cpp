@@ -50,7 +50,7 @@ static HRESULT Hooked_CreateDevice(IDirect3D9* This,
 	UINT Adapter, D3DDEVTYPE DeviceType, HWND hFocusWindow, DWORD BehaviorFlags, D3DPRESENT_PARAMETERS* pPresentationParameters,
 	IDirect3DDevice9** ppReturnedDeviceInterface)
 {
-	//::OutputDebugStringA("Hooked_CreateDevice called\n");
+	::OutputDebugStringA("Hooked_CreateDevice called\n");
 
 	HRESULT hr = pOrigCreateDevice(This, Adapter, DeviceType, hFocusWindow, BehaviorFlags, pPresentationParameters,
 		ppReturnedDeviceInterface);
@@ -67,20 +67,19 @@ static HRESULT Hooked_CreateDevice(IDirect3D9* This,
 //	UINT SDKVersion
 // );
 
-typedef IDirect3D9*(WINAPI *lpfnDirect3DCreate9)(UINT SDKVersion);
-lpfnDirect3DCreate9 trampoline_Direct3DCreate9 = nullptr;
 SIZE_T hook_id_Direct3DCreate9;
+IDirect3D9* (WINAPI *oOrigDirect3DCreate9)(UINT SDKVersion);
 
 IDirect3D9* game_Direct3D9 = nullptr;
 
 static IDirect3D9* WINAPI Hooked_Direct3DCreate9(UINT SDKVersion)
 {
-//	::OutputDebugStringA("Hooked_Direct3DCreate9 called\n");
+	::OutputDebugStringA("Hooked_Direct3DCreate9 called\n");
 
 	// Call original routine, and save the returned Direct3D9.  We only
 	// want to keep the latest one, because the game might make several
 	// as it tests system capabilities.
-	game_Direct3D9 = trampoline_Direct3DCreate9(SDKVersion);
+	game_Direct3D9 = oOrigDirect3DCreate9(SDKVersion);
 
 	// If we are here, we want to now hook the IDirect3D9::CreateDevice
 	// routine, as that will be the next thing the game does, and we
@@ -90,13 +89,13 @@ static IDirect3D9* WINAPI Hooked_Direct3DCreate9(UINT SDKVersion)
 	// address of the CreateDevice function. Since we are using the 
 	// CINTERFACE, we can just directly access it.
 
-	//if (pOrigCreateDevice == nullptr)
-	//{
-	//	DWORD dwOsErr = nktInProc.Hook(&hook_id_CreateDevice, (void**)&pOrigCreateDevice,
-	//		game_Direct3D9->lpVtbl->CreateDevice, Hooked_CreateDevice, NKTHOOKLIB_DisallowReentrancy);
-	//	if (FAILED(dwOsErr))
-	//		::OutputDebugStringA("Failed to hook IDirect3D9::CreateDevice\n");
-	//}
+	if (pOrigCreateDevice == nullptr)
+	{
+		DWORD dwOsErr = nktInProc.Hook(&hook_id_CreateDevice, (void**)&pOrigCreateDevice,
+			game_Direct3D9->lpVtbl->CreateDevice, Hooked_CreateDevice, NKTHOOKLIB_DisallowReentrancy);
+		if (FAILED(dwOsErr))
+			::OutputDebugStringA("Failed to hook IDirect3D9::CreateDevice\n");
+	}
 
 	return game_Direct3D9;
 }
@@ -133,15 +132,29 @@ BOOL APIENTRY DllMain(__in HMODULE hModule, __in DWORD ulReasonForCall, __in LPV
 			if (!hDX9)
 				goto err;
 
-			//fnOrigDirect3DCreate9 = NktHookLibHelpers::GetProcedureAddress(hDX9, "Direct3DCreate9");
-			//if (fnOrigDirect3DCreate9 == NULL)
-			//	goto err;
+			fnOrigDirect3DCreate9 = NktHookLibHelpers::GetProcedureAddress(hDX9, "Direct3DCreate9");
+			if (fnOrigDirect3DCreate9 == NULL)
+				goto err;
 
-			//dwOsErr = nktInProc.Hook(&hook_id_Direct3DCreate9, (void**)&trampoline_Direct3DCreate9, 
-			//	fnOrigDirect3DCreate9, Hooked_Direct3DCreate9, NKTHOOKLIB_DisallowReentrancy);
-			//if (FAILED(dwOsErr))
-			//	goto err;
+			dwOsErr = nktInProc.Hook(&hook_id_Direct3DCreate9, (void**)&oOrigDirect3DCreate9,
+				fnOrigDirect3DCreate9, Hooked_Direct3DCreate9, NKTHOOKLIB_DisallowReentrancy);
+			if (FAILED(dwOsErr))
+				goto err;
 
+			TCHAR name[255];
+			DWORD ret;
+			BOOL bret;
+			ret = ::GetCurrentDirectory(255, name);
+			bret = ::SetCurrentDirectory(L"G:\\Games\\limbo\\");
+			if (!bret)
+			{
+				::OutputDebugStringA("Failed to set working directory\n");
+				ret = ::GetLastError();
+			}
+			ret = ::GetCurrentDirectory(255, name);
+			::OutputDebugStringA("ending working directory:");
+			::OutputDebugStringW(name); 
+			::OutputDebugStringA("\n");
 
 			//IDirect3D9* g_pD3D = NULL;
 			//g_pD3D = Direct3DCreate9(D3D_SDK_VERSION);
@@ -176,7 +189,7 @@ BOOL APIENTRY DllMain(__in HMODULE hModule, __in DWORD ulReasonForCall, __in LPV
 	}
 	return TRUE;
 err:
-	//::OutputDebugStringA("Failed creating Hook for Direct3DCreate9.\n");
+	::OutputDebugStringA("Failed creating Hook for Direct3DCreate9.\n");
 	return FALSE;
 }
 
