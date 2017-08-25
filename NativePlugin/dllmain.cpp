@@ -89,13 +89,13 @@ static IDirect3D9* WINAPI Hooked_Direct3DCreate9(UINT SDKVersion)
 	// address of the CreateDevice function. Since we are using the 
 	// CINTERFACE, we can just directly access it.
 
-	if (pOrigCreateDevice == nullptr)
-	{
-		DWORD dwOsErr = nktInProc.Hook(&hook_id_CreateDevice, (void**)&pOrigCreateDevice,
-			game_Direct3D9->lpVtbl->CreateDevice, Hooked_CreateDevice, NKTHOOKLIB_DisallowReentrancy);
-		if (FAILED(dwOsErr))
-			::OutputDebugStringA("Failed to hook IDirect3D9::CreateDevice\n");
-	}
+	//if (pOrigCreateDevice == nullptr)
+	//{
+	//	DWORD dwOsErr = nktInProc.Hook(&hook_id_CreateDevice, (void**)&pOrigCreateDevice,
+	//		game_Direct3D9->lpVtbl->CreateDevice, Hooked_CreateDevice, NKTHOOKLIB_DisallowReentrancy);
+	//	if (FAILED(dwOsErr))
+	//		::OutputDebugStringA("Failed to hook IDirect3D9::CreateDevice\n");
+	//}
 
 	return game_Direct3D9;
 }
@@ -145,14 +145,7 @@ BOOL APIENTRY DllMain(__in HMODULE hModule, __in DWORD ulReasonForCall, __in LPV
 			DWORD ret;
 			BOOL bret;
 			ret = ::GetCurrentDirectory(255, name);
-			bret = ::SetCurrentDirectory(L"G:\\Games\\limbo\\");
-			if (!bret)
-			{
-				::OutputDebugStringA("Failed to set working directory\n");
-				ret = ::GetLastError();
-			}
-			ret = ::GetCurrentDirectory(255, name);
-			::OutputDebugStringA("ending working directory:");
+			::OutputDebugStringA("Working directory: ");
 			::OutputDebugStringW(name); 
 			::OutputDebugStringA("\n");
 

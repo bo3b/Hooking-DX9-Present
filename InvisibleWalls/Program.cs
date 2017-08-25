@@ -44,14 +44,16 @@ namespace InvisibleWalls
                 throw new Exception("Deviare initialization error.");
 
             // For any hook that is called using this SpyMgr, let us know.
-            //_spyMgr.OnFunctionCalled += new DNktSpyMgrEvents_OnFunctionCalledEventHandler(OnFunctionCalled);
+            _spyMgr.OnFunctionCalled += new DNktSpyMgrEvents_OnFunctionCalledEventHandler(OnFunctionCalled);
 
-            Directory.SetCurrentDirectory(@"G:\Games\The Ball\Binaries\Win32\");
+            // Must set the game directory specifically, otherwise it winds up being the 
+            // C# app directory which can make the game crash.  This must be done before CreateProcess.
+            Directory.SetCurrentDirectory(@"G:\Games\limbo\");
 
 
             // Launch the game, but suspended, so we can hook our first call and be certain to catch it.
             Console.WriteLine("Launch game...");
-            _gameProcess = _spyMgr.CreateProcess(@"G:\Games\The Ball\Binaries\Win32\theball.exe", true, out continueevent);
+            _gameProcess = _spyMgr.CreateProcess(@"G:\Games\limbo\limbo.exe", true, out continueevent);
             if (_gameProcess == null)
                 throw new Exception("Game launch failed.");
 
