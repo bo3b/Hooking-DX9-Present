@@ -46,7 +46,7 @@ STDMETHOD(pOrigCreateDevice)(IDirect3D9* This,
 
 IDirect3DDevice9* game_Device;
 
-static HRESULT Hooked_CreateDevice(IDirect3D9* This,
+static HRESULT __stdcall Hooked_CreateDevice(IDirect3D9* This,
 	UINT Adapter, D3DDEVTYPE DeviceType, HWND hFocusWindow, DWORD BehaviorFlags, D3DPRESENT_PARAMETERS* pPresentationParameters,
 	IDirect3DDevice9** ppReturnedDeviceInterface)
 {
@@ -89,13 +89,13 @@ static IDirect3D9* WINAPI Hooked_Direct3DCreate9(UINT SDKVersion)
 	// address of the CreateDevice function. Since we are using the 
 	// CINTERFACE, we can just directly access it.
 
-	//if (pOrigCreateDevice == nullptr)
-	//{
-	//	DWORD dwOsErr = nktInProc.Hook(&hook_id_CreateDevice, (void**)&pOrigCreateDevice,
-	//		game_Direct3D9->lpVtbl->CreateDevice, Hooked_CreateDevice, NKTHOOKLIB_DisallowReentrancy);
-	//	if (FAILED(dwOsErr))
-	//		::OutputDebugStringA("Failed to hook IDirect3D9::CreateDevice\n");
-	//}
+	if (pOrigCreateDevice == nullptr)
+	{
+		DWORD dwOsErr = nktInProc.Hook(&hook_id_CreateDevice, (void**)&pOrigCreateDevice,
+			game_Direct3D9->lpVtbl->CreateDevice, Hooked_CreateDevice, 0);
+		if (FAILED(dwOsErr))
+			::OutputDebugStringA("Failed to hook IDirect3D9::CreateDevice\n");
+	}
 
 	return game_Direct3D9;
 }
@@ -123,6 +123,9 @@ BOOL APIENTRY DllMain(__in HMODULE hModule, __in DWORD ulReasonForCall, __in LPV
 			DWORD dwOsErr;
 			void* fnOrigDirect3DCreate9;
 
+			nktInProc.SetEnableDebugOutput(TRUE);
+			::CoInitializeEx(NULL, COINIT_MULTITHREADED);
+
 			// Start with the Direct3DCreate9 call.  This is a direct export from the
 			// d3d9.dll, so we don't need the vtable to hook this.
 			//
@@ -137,7 +140,7 @@ BOOL APIENTRY DllMain(__in HMODULE hModule, __in DWORD ulReasonForCall, __in LPV
 				goto err;
 
 			dwOsErr = nktInProc.Hook(&hook_id_Direct3DCreate9, (void**)&oOrigDirect3DCreate9,
-				fnOrigDirect3DCreate9, Hooked_Direct3DCreate9, NKTHOOKLIB_DisallowReentrancy);
+				fnOrigDirect3DCreate9, Hooked_Direct3DCreate9, 0);
 			if (FAILED(dwOsErr))
 				goto err;
 
