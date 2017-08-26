@@ -29,24 +29,48 @@ CNktHookLib nktInProc;
 
 
 //-----------------------------------------------------------
+// API chunks to allow us to hook the IDirect3DDevice9::Present
+
+// This serves a dual purpose of defining the interface routine as required by
+// DX9, and also is the storage for the original call, returned by nktInProc.Hook.
+
+SIZE_T hook_id_Present;
+STDMETHOD_(HRESULT, pOrigPresent)(IDirect3DDevice9* This,
+	/* [in] */ const RECT    *pSourceRect,
+	/* [in] */ const RECT    *pDestRect,
+	/* [in] */       HWND    hDestWindowOverride,
+	/* [in] */ const RGNDATA *pDirtyRegion
+	) = nullptr;
+
+
+STDMETHODIMP_(HRESULT) Hooked_Present(IDirect3DDevice9* This,
+	CONST RECT* pSourceRect, CONST RECT* pDestRect, HWND hDestWindowOverride, CONST RGNDATA* pDirtyRegion)
+{
+//	::OutputDebugStringA("Hooked_Present called\n");	// Called too often to log
+
+	HRESULT hr = pOrigPresent(This, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion);
+
+	return hr;
+}
+
+//-----------------------------------------------------------
 // API chunks to allow us to hook the IDirect3D9::CreateDevice
 
 // This serves a dual purpose of defining the interface routine as required by
 // DX9, and also is the storage for the original call, returned by nktInProc.Hook.
 
 SIZE_T hook_id_CreateDevice;
-STDMETHOD(pOrigCreateDevice)(IDirect3D9* This,
+STDMETHOD_(HRESULT, pOrigCreateDevice)(IDirect3D9* This,
 	/* [in] */          UINT                  Adapter,
 	/* [in] */          D3DDEVTYPE            DeviceType,
 	/* [in] */          HWND                  hFocusWindow,
 	/* [in] */          DWORD                 BehaviorFlags,
 	/* [in, out] */     D3DPRESENT_PARAMETERS *pPresentationParameters,
 	/* [out, retval] */ IDirect3DDevice9      **ppReturnedDeviceInterface
- ) = nullptr;
+	) = nullptr;
 
-IDirect3DDevice9* game_Device;
 
-static HRESULT __stdcall Hooked_CreateDevice(IDirect3D9* This,
+STDMETHODIMP_(HRESULT) Hooked_CreateDevice(IDirect3D9* This,
 	UINT Adapter, D3DDEVTYPE DeviceType, HWND hFocusWindow, DWORD BehaviorFlags, D3DPRESENT_PARAMETERS* pPresentationParameters,
 	IDirect3DDevice9** ppReturnedDeviceInterface)
 {
@@ -54,8 +78,16 @@ static HRESULT __stdcall Hooked_CreateDevice(IDirect3D9* This,
 
 	HRESULT hr = pOrigCreateDevice(This, Adapter, DeviceType, hFocusWindow, BehaviorFlags, pPresentationParameters,
 		ppReturnedDeviceInterface);
-	if (SUCCEEDED(hr))
-		game_Device = *ppReturnedDeviceInterface;
+
+	if (pOrigPresent == nullptr && SUCCEEDED(hr) && ppReturnedDeviceInterface != nullptr)
+	{
+		IDirect3DDevice9* game_Device = *ppReturnedDeviceInterface;
+
+		DWORD dwOsErr = nktInProc.Hook(&hook_id_Present, (void**)&pOrigPresent,
+			game_Device->lpVtbl->Present, Hooked_Present, 0);
+		if (FAILED(dwOsErr))
+			::OutputDebugStringA("Failed to hook IDirect3DDevice9::Present\n");
+	}
 
 	return hr;
 }
@@ -63,23 +95,22 @@ static HRESULT __stdcall Hooked_CreateDevice(IDirect3D9* This,
 //-----------------------------------------------------------
 // API chunks to allow us to hook the Direct3DCreate9
 //
-// IDirect3D9* Direct3DCreate9(
-//	UINT SDKVersion
-// );
 
 SIZE_T hook_id_Direct3DCreate9;
-IDirect3D9* (WINAPI *oOrigDirect3DCreate9)(UINT SDKVersion);
+STDMETHOD_(IDirect3D9*, pOrigDirect3DCreate9)(
+	UINT SDKVersion
+	) = nullptr;
 
-IDirect3D9* game_Direct3D9 = nullptr;
 
-static IDirect3D9* WINAPI Hooked_Direct3DCreate9(UINT SDKVersion)
+STDMETHODIMP_(IDirect3D9*) Hooked_Direct3DCreate9(UINT SDKVersion)
 {
 	::OutputDebugStringA("Hooked_Direct3DCreate9 called\n");
 
 	// Call original routine, and save the returned Direct3D9.  We only
 	// want to keep the latest one, because the game might make several
 	// as it tests system capabilities.
-	game_Direct3D9 = oOrigDirect3DCreate9(SDKVersion);
+	IDirect3D9* game_Direct3D9;
+	game_Direct3D9 = pOrigDirect3DCreate9(SDKVersion);
 
 	// If we are here, we want to now hook the IDirect3D9::CreateDevice
 	// routine, as that will be the next thing the game does, and we
@@ -89,7 +120,7 @@ static IDirect3D9* WINAPI Hooked_Direct3DCreate9(UINT SDKVersion)
 	// address of the CreateDevice function. Since we are using the 
 	// CINTERFACE, we can just directly access it.
 
-	if (pOrigCreateDevice == nullptr)
+	if (pOrigCreateDevice == nullptr && game_Direct3D9 != nullptr)
 	{
 		DWORD dwOsErr = nktInProc.Hook(&hook_id_CreateDevice, (void**)&pOrigCreateDevice,
 			game_Direct3D9->lpVtbl->CreateDevice, Hooked_CreateDevice, 0);
@@ -139,14 +170,13 @@ BOOL APIENTRY DllMain(__in HMODULE hModule, __in DWORD ulReasonForCall, __in LPV
 			if (fnOrigDirect3DCreate9 == NULL)
 				goto err;
 
-			dwOsErr = nktInProc.Hook(&hook_id_Direct3DCreate9, (void**)&oOrigDirect3DCreate9,
+			dwOsErr = nktInProc.Hook(&hook_id_Direct3DCreate9, (void**)&pOrigDirect3DCreate9,
 				fnOrigDirect3DCreate9, Hooked_Direct3DCreate9, 0);
 			if (FAILED(dwOsErr))
 				goto err;
 
 			TCHAR name[255];
 			DWORD ret;
-			BOOL bret;
 			ret = ::GetCurrentDirectory(255, name);
 			::OutputDebugStringA("Working directory: ");
 			::OutputDebugStringW(name); 
