@@ -74,17 +74,33 @@ extern "C" VOID WINAPI OnHookRemoved(__in INktHookInfo *lpHookInfo, __in DWORD d
 //	UINT SDKVersion
 // );
 
-IDirect3D9* g_pD3D = nullptr;
-HANDLE hPipe = nullptr;
 
 extern "C" HRESULT WINAPI OnFunctionCall(__in INktHookInfo *lpHookInfo, __in DWORD dwChainIndex,
 	__in INktHookCallInfoPlugin *lpHookCallInfoPlugin)
 {
-	::OutputDebugString(L"NativePlugin::OnFunctionCall called for ");
 	BSTR name;
 	lpHookInfo->get_FunctionName(&name);
+	IDirect3D9* g_pD3D = nullptr;
+	HWND hWindow = GetActiveWindow();
+
+	::OutputDebugString(L"NativePlugin::OnFunctionCall called for ");
 	::OutputDebugString(name);
 	::OutputDebugString(L"\n");
+
+	// If this is the call for D3D9.DLL!Direct3DCreate9, and we also have 
+	// the game window up, here in the game process, then we can go find
+	// the Present routine address.
+	// We need the active window in order to be able to create the desired
+	// IDirect3DDevice9 object.
+
+	if ((hWindow != nullptr) && (_wcsicmp(name, L"D3D9.DLL!Direct3DCreate9")))
+	{
+		INktParam* nktResult;
+		lpHookCallInfoPlugin->Result(&nktResult);
+		nktResult->get_PointerVal((long*)(&g_pD3D));
+
+		LPVOID addrPresent = GetPresentAddr(hWindow, g_pD3D);
+	}
 
 	//HRESULT hres;
 	//INktParamsEnum* paramsEnum;

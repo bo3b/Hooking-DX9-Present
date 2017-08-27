@@ -48,12 +48,12 @@ namespace InvisibleWalls
 
             // Must set the game directory specifically, otherwise it winds up being the 
             // C# app directory which can make the game crash.  This must be done before CreateProcess.
-            Directory.SetCurrentDirectory(@"G:\Games\limbo\");
+            Directory.SetCurrentDirectory(@"G:\Games\The Ball\Binaries\Win32\");
 
 
             // Launch the game, but suspended, so we can hook our first call and be certain to catch it.
             Console.WriteLine("Launch game...");
-            _gameProcess = _spyMgr.CreateProcess(@"G:\Games\limbo\limbo.exe", true, out continueevent);
+            _gameProcess = _spyMgr.CreateProcess(@"G:\Games\The Ball\Binaries\Win32\theball.exe", true, out continueevent);
             if (_gameProcess == null)
                 throw new Exception("Game launch failed.");
 
@@ -67,8 +67,7 @@ namespace InvisibleWalls
             NktHook d3dHook = _spyMgr.CreateHook("D3D9.DLL!Direct3DCreate9",
                 (int)(eNktHookFlags.flgRestrictAutoHookToSameExecutable | 
                 eNktHookFlags.flgOnlyPostCall | 
-                eNktHookFlags.flgDontCheckAddress |
-                eNktHookFlags.flgAsyncCallbacks));
+                eNktHookFlags.flgDontCheckAddress));
             if (d3dHook == null)
                 throw new Exception("Failed to hook D3D9.DLL!Direct3DCreate9");
 

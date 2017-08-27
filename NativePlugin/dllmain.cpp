@@ -219,29 +219,47 @@ err:
 	return FALSE;
 }
 
-LPVOID __stdcall GetPresentAddr(LPVOID pD3D)
+
+// This routine will grab the address of the  IDirect3DDevice9::Present
+// function.  Present is the primary routine for hooking games, because
+// it is called every frame to Present what the game has drawn. 
+//
+// This routine is in this compilation unit, so that we can use the
+// CINTERFACE trick to easily get the address.
+//
+// This should only be called when the game has setup it's window, so
+// that we can do the sequence to create an IDirect3DDevice9 object.
+// This object will be released, we just need to fetch the Present
+// address, and it will be the same address for any caller in the 
+// game process.
+//
+// The sequence a game will use is:
+//  IDirect3D9* D3D9::Direct3DCreate9();
+//  IDirect3D9::CreateDevice(return ppIDirect3DDevice9);
+//  ppIDirect3DDevice9->Present
+
+
+LPVOID __stdcall GetPresentAddr(HWND window, IDirect3D9* pD3D)
 {
-	IDirect3D9* pD = (IDirect3D9*)pD3D;
 	IDirect3DDevice9* g_pDevice9;
 	D3DPRESENT_PARAMETERS presParams = {};
+	LPVOID addrPresent = nullptr;
+
 	LPVOID addrCreateDevice = nullptr;
 	LPVOID addrPresent = nullptr;
-	presParams.BackBufferWidth = 1600;
-	presParams.BackBufferHeight = 1200;
+	presParams.BackBufferWidth = 1024;
+	presParams.BackBufferHeight = 768;
 	presParams.BackBufferFormat = D3DFMT_UNKNOWN;
 	presParams.SwapEffect = D3DSWAPEFFECT_DISCARD;
 	presParams.Windowed = true;
-	HRESULT hres = pD->lpVtbl->CreateDevice(pD, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
-		GetActiveWindow(), D3DCREATE_HARDWARE_VERTEXPROCESSING, &presParams,
+	HRESULT hres = pD3D->lpVtbl->CreateDevice(pD3D, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
+		window, D3DCREATE_HARDWARE_VERTEXPROCESSING, &presParams,
 		&g_pDevice9);
 	if (SUCCEEDED(hres))
-		return g_pDevice9->lpVtbl->Present;
-	else
-		return nullptr;
+		addrPresent = g_pDevice9->lpVtbl->Present;
+
+	g_pDevice9->lpVtbl->Release(g_pDevice9);
+
+	return addrPresent;
 }
 
-LPVOID __stdcall GetCreateAddr(LPVOID pD3D)
-{
-	IDirect3D9* pD = (IDirect3D9*)pD3D;
-	return pD->lpVtbl->CreateDevice;
-}
