@@ -8,18 +8,12 @@
 #import "DeviareCOM.dll" raw_interfaces_only, named_guids, raw_dispinterfaces, auto_rename
 
 
-// We don't include this in NativePlugin.h, because we treat the d3d9.h differently
-// when we are fetching the routine address, versus just using the interface.
-
-#include <d3d9.h>
-
-
 
 // --------------------------------------------------------------------------------------------------
 //IMPORTANT NOTES:
 //---------------
 //
-//1) Regardless of the functionallity of the plugin, the dll must export: OnLoad, OnUnload, OnHookAdded,
+//1) Regardless of the functionality of the plugin, the dll must export: OnLoad, OnUnload, OnHookAdded,
 //   OnHookRemoved and OnFunctionCall (Tip: add a .def file to avoid name mangling)
 //
 //2) Code inside methods should try/catch exceptions to avoid possible crashes in hooked application.
@@ -39,6 +33,10 @@ using namespace Deviare2;
 extern "C" HRESULT WINAPI OnLoad()
 {
 	::OutputDebugStringA("NativePlugin::OnLoad called\n");
+
+	// This is running inside the game itself, so make sure we can use
+	// COM here.
+	::CoInitializeEx(NULL, COINIT_MULTITHREADED);
 
 	return S_OK;
 }
@@ -67,79 +65,48 @@ extern "C" VOID WINAPI OnHookRemoved(__in INktHookInfo *lpHookInfo, __in DWORD d
 
 
 // This is the primary call we are interested in.  It will be called after CreateDevice
-// is called by the game.  We can then fetch the returned IDirect3DDevice9 object, which
-// will be stored in pDeviceInterface.
+// is called by the game.  We can then fetch the returned IDirect3D9 object, and
+// use that to hook the next level.
+// 
+// We can use the Deviare side to hook this function, because Direct3DCreate9 is
+// a direct export from the d3d9 DLL, and is also directly supported in the 
+// Deviare DB.
 
-// IDirect3D9* Direct3DCreate9(
-//	UINT SDKVersion
-// );
+// Original API:
+//	IDirect3D9* Direct3DCreate9(
+//		UINT SDKVersion
+//	);
 
 
 extern "C" HRESULT WINAPI OnFunctionCall(__in INktHookInfo *lpHookInfo, __in DWORD dwChainIndex,
 	__in INktHookCallInfoPlugin *lpHookCallInfoPlugin)
 {
 	BSTR name;
+	INktParam* nktResult;
+	IDirect3D9* pDX9 = nullptr;
+
 	lpHookInfo->get_FunctionName(&name);
-	IDirect3D9* g_pD3D = nullptr;
-	HWND hWindow = GetActiveWindow();
 
 	::OutputDebugString(L"NativePlugin::OnFunctionCall called for ");
 	::OutputDebugString(name);
 	::OutputDebugString(L"\n");
 
-	// If this is the call for D3D9.DLL!Direct3DCreate9, and we also have 
-	// the game window up, here in the game process, then we can go find
-	// the Present routine address.
-	// We need the active window in order to be able to create the desired
-	// IDirect3DDevice9 object.
+	// We only expect this to be called for D3D9.DLL!Direct3DCreate9. We want to daisy chain
+	// through the call sequence to ultimately get the Present routine.
+	//
+	// The result of the Direct3DCreate9 function is the IDirect3D9 object, which you can think
+	// of as DX9 itself. 
 
-	if ((hWindow != nullptr) && (_wcsicmp(name, L"D3D9.DLL!Direct3DCreate9")))
-	{
-		INktParam* nktResult;
-		lpHookCallInfoPlugin->Result(&nktResult);
-		nktResult->get_PointerVal((long*)(&g_pD3D));
+	lpHookCallInfoPlugin->Result(&nktResult);
+	nktResult->get_PointerVal((long*)(&pDX9));
 
-		LPVOID addrPresent = GetPresentAddr(hWindow, g_pD3D);
-	}
+	// At this point, we are going to switch from using Deviare style calls
+	// to In-Proc style calls, because the routines we need to hook are not
+	// found in the Deviare database.  It would be possible to add them 
+	// and then rebuilding it, but In-Proc works alongside Deviare so this
+	// approach is simpler.
 
-	//HRESULT hres;
-	//INktParamsEnum* paramsEnum;
-	//long paramCount;
-	//long pointeraddress;
-
-	//INktParam* nktResult;
-	//lpHookCallInfoPlugin->Result(&nktResult);
-	//nktResult->get_PointerVal((long*)(&g_pD3D));
-
-	//// Now send that address of the CreateDevice call back to C#
-	//LPVOID addrCreate = GetCreateAddr(g_pD3D);
-
-	//hPipe = ::CreateNamedPipe(L"\\\\.\\pipe\\HyperPipe32",
-	//	PIPE_ACCESS_DUPLEX,
-	//	PIPE_TYPE_BYTE | PIPE_READMODE_BYTE,
-	//	PIPE_UNLIMITED_INSTANCES,
-	//	4096,
-	//	4096,
-	//	0,
-	//	NULL);
-
-	//ConnectNamedPipe(hPipe, NULL);
-
-	//DWORD bytesWritten = 0;
-	//WriteFile(hPipe, &addrCreate, sizeof(LPVOID), &bytesWritten, NULL);
-
-
-	// If we have a valid window here, we can drive down through the DX9 vtables to 
-	// find the address of the Present call.
-	//LPVOID pPresent = nullptr;
-	//HWND window = GetActiveWindow();
-	//if (window != nullptr)
-	//{
-	//	pPresent = GetPresentAddr(g_pD3D);
-	//	DWORD bytesWritten = 0;
-	//	WriteFile(hPipe, &pPresent, sizeof(LPVOID), &bytesWritten, NULL);
-	//}
-
+	HookCreateDevice(pDX9);
 
 	return S_OK;
 }

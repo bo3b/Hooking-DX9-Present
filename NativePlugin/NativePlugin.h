@@ -22,10 +22,11 @@
 
 #include <stdlib.h>
 
+#include <d3d9.h>
 
 //#include <objbase.h>
 
-LPVOID __stdcall GetPresentAddr(HWND window, IDirect3D9* pD3D);
+void HookCreateDevice(IDirect3D9* pDX9);
 
 
 
