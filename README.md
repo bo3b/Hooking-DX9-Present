@@ -8,6 +8,14 @@ in the Deviare DB for DX9 is CreateDevice, so it's easier to directly use those 
 C++ in a plugin.  This also allows the plugin to handle more complex tasks, without 
 impacting performance like it would if it were done in the C# host side.
 
+The goal of the sample is just to demonstrate and clarify how to use Nektra's awesome
+Deviare and In-Proc hooking libraries.  The DX9 Present call is often desirable as a
+spot to hook, especially for overlays.  This demonstrates how to hook that call.
+
+The actual functionality here will change the drawing mode from Solid to WireFrame.  It's
+not particularly useful or interesting, but shows how to hook DX9 SetRenderState and 
+override a parameter.
+
 <br>
 
 This sample is intended to demonstrate several things that are useful to DX9
@@ -19,6 +27,7 @@ or graphics programmers. This is only setup for DX9 and x86, but could be extend
  4) An easily copied technique to hook any vtable based DX9 calls.
  5) Deviare style hook for a normal DLL export function.
  6) How to use Nektra CallCustomAPI.
+ 7) How to step through DX9 objects, to create a Present hook.
 
 <br>
 
