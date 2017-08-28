@@ -24,17 +24,7 @@
 
 #include <d3d9.h>
 
-//#include <objbase.h>
 
 void HookCreateDevice(IDirect3D9* pDX9);
 
-
-
-//#define _ATL_CSTRING_EXPLICIT_CONSTRUCTORS
-//#include <atlbase.h>
-//#include <atlstr.h>
-//
-//#define MY_EXPORT extern "C" __declspec(dllexport)
-
-//-----------------------------------------------------------
 

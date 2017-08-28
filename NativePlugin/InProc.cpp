@@ -63,16 +63,14 @@ bool gShowWireFrame = false;
 //	Insert=WireFrame
 //	Delete=Normal
 
-#define MY_EXPORT extern "C" __declspec(dllexport)
-
-MY_EXPORT void WINAPI ShowWireFrame(void)
+void WINAPI ShowWireFrame(void)
 {
 	::OutputDebugString(L"NativePlugin::ShowWireFrame called\n");
 
 	gShowWireFrame = true;
 }
 
-MY_EXPORT void WINAPI ShowWalls(void)
+void WINAPI ShowWalls(void)
 {
 	::OutputDebugString(L"NativePlugin::ShowWalls called\n");
 
@@ -92,7 +90,7 @@ STDMETHOD_(HRESULT, pOrigSetRenderState)(IDirect3DDevice9* This,
 	/* [in] */ DWORD              Value
 	) = nullptr;
 
-// The SetRenderState is called for innumerable reasons.  If we are being called
+// The SetRenderState can be called for innumerable reasons.  If we are being called
 // for a D3DRS_FILLMODE, we will set the parameter based on the current state.
 // Otherwise we will call through to the original.
 
@@ -129,7 +127,7 @@ STDMETHOD_(HRESULT, pOrigPresent)(IDirect3DDevice9* This,
 	) = nullptr;
 
 
-// This is it. The one we are after.  This is the hook for the DX9 Present call
+// This is it. The one we are often after.  This is the hook for the DX9 Present call
 // which the game will call for every frame.  
 
 // This is not used in the sample, but shows how it's possible to hook Present.
@@ -204,8 +202,8 @@ STDMETHODIMP_(HRESULT) Hooked_CreateDevice(IDirect3D9* This,
 //
 // The sequence a game will use is:
 //   IDirect3D9* Direct3DCreate9();
-//   IDirect3D9::CreateDevice(return ppIDirect3DDevice9);
-//   ppIDirect3DDevice9->Present
+//   IDirect3D9::CreateDevice(return pIDirect3DDevice9);
+//   pIDirect3DDevice9->Present
 //
 // This hook call is called from the Deviare side, to continue the 
 // daisy-chain to IDirect3DDevice9::Present.

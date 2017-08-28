@@ -1,5 +1,17 @@
 ﻿// A simple console app to demonstrate how to use Deviare in C#, to connect to a native
-// C++ plugin, running in a target app.  
+// C++ plugin, which is running as a CustomDLL in a target app.  
+//
+// This sample is intended to demonstrate several things that are useful to DX9
+// or graphics programmers:
+//
+//  1) Setting up a mixed environment of C# and Native C++
+//  2) Using a Nektra CustomDLL for hooking.
+//  3) Mixed use of In-Proc hooking, and Deviare hooking.
+//  4) A technique to easily hook vtable based DX9 calls.
+//  5) Deviare style hook for a normal DLL export function.
+//  6) How to use Nektra CallCustomAPI.
+//  7) Easily copied approach for hooking any DX9 function.
+//
 //
 // This is only setup for DX9 and x86, but could be extended for either x64 or DX11.
 // To test, use it to launch any DX9 x86 game.
@@ -9,17 +21,15 @@
 // C++ in a plugin.  This also allows the plugin to handle more complex tasks, without 
 // impacting performance like it would if it were done in the C# host side.
 //
+//
+// Written by Bo3b Johnson, August 2017.  
+//  This code is MIT license, free for any use.
+//  Deviare and Nektra In-Proc are used here via their GPL 3 license.
+//
 // This is loosely based on the Invisible-Walls sample, but simplified.
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 using System.IO;
-
-using System.IO.Pipes;
 
 using Nektra.Deviare2;
 
@@ -69,6 +79,7 @@ namespace InvisibleWalls
                 throw new Exception("Game launch failed.");
 
             // Load the NativePlugin for the C++ side.  The NativePlugin must be in this app folder.
+            // The Agent supports the use of Deviare in the CustomDLL, but does not respond to hooks.
 
             Console.WriteLine("Load NativePlugin... " + nativeDLLName);
             _spyMgr.LoadAgent(_gameProcess);
@@ -81,19 +92,16 @@ namespace InvisibleWalls
             // We set this to flgOnlyPostCall, because we want to use the IDirect3D9 object it returns.
 
             Console.WriteLine("Hook the D3D9.DLL!Direct3DCreate9...");
-            NktHook d3dHook = _spyMgr.CreateHook("D3D9.DLL!Direct3DCreate9",
-                (int)(eNktHookFlags.flgRestrictAutoHookToSameExecutable |
-                eNktHookFlags.flgOnlyPostCall |
-                eNktHookFlags.flgDontCheckAddress));
+            NktHook d3dHook = _spyMgr.CreateHook("D3D9.DLL!Direct3DCreate9", (int)eNktHookFlags.flgOnlyPostCall);
             if (d3dHook == null)
                 throw new Exception("Failed to hook D3D9.DLL!Direct3DCreate9");
 
             // Make sure the CustomHandler in the NativePlugin at OnFunctionCall gets called when this 
             // object is created. At that point, the native code will take over.
 
-            d3dHook.AddCustomHandler(nativeDLLName, (int)eNktHookCustomHandlerFlags.flgChDontCallIfLoaderLocked, "");
+            d3dHook.AddCustomHandler(nativeDLLName, 0, "");
 
-            // Finally attach and activate the hook in the game process.
+            // Finally attach and activate the hook in the still suspended game process.
 
             d3dHook.Attach(_gameProcess, true);
             d3dHook.Hook(true);

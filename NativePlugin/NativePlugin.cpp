@@ -1,10 +1,17 @@
 // NativePlugin.cpp : Defines the exported functions for the DLL.
-//  Including the special command API to change modes.
+//
+// This part of the code is the Deviare style hook that handles the 
+// very first DX9 object creation.  Even though this is C++, it is 
+// most useful for Deviare style hooks that are supported by their DB,
+// and are direct exports from a DLL.  It's not well suited for vtable
+// based calls like those used by DX9.
 
 #include "NativePlugin.h"
 
 // We need the Deviare interface though, to be able to provide the OnLoad,
-// OnFunctionCalled interfaces, to be able to LoadCustomDLL this DLL.
+// OnFunctionCalled interfaces, and to be able to LoadCustomDLL this DLL from
+// the C# app.
+
 #import "DeviareCOM.dll" raw_interfaces_only, named_guids, raw_dispinterfaces, auto_rename
 
 
@@ -30,7 +37,7 @@
 
 using namespace Deviare2;
 
-extern "C" HRESULT WINAPI OnLoad()
+HRESULT WINAPI OnLoad()
 {
 	::OutputDebugStringA("NativePlugin::OnLoad called\n");
 
@@ -42,14 +49,14 @@ extern "C" HRESULT WINAPI OnLoad()
 }
 
 
-extern "C" VOID WINAPI OnUnload()
+VOID WINAPI OnUnload()
 {
 	::OutputDebugStringA("NativePlugin::OnUnLoad called\n");
 	return;
 }
 
 
-extern "C" HRESULT WINAPI OnHookAdded(__in INktHookInfo *lpHookInfo, __in DWORD dwChainIndex,
+HRESULT WINAPI OnHookAdded(__in INktHookInfo *lpHookInfo, __in DWORD dwChainIndex,
 	__in LPCWSTR szParametersW)
 {
 	::OutputDebugStringA("NativePlugin::OnHookAdded called\n");
@@ -57,7 +64,7 @@ extern "C" HRESULT WINAPI OnHookAdded(__in INktHookInfo *lpHookInfo, __in DWORD 
 }
 
 
-extern "C" VOID WINAPI OnHookRemoved(__in INktHookInfo *lpHookInfo, __in DWORD dwChainIndex)
+VOID WINAPI OnHookRemoved(__in INktHookInfo *lpHookInfo, __in DWORD dwChainIndex)
 {
 	::OutputDebugStringA("NativePlugin::OnHookRemoved called\n");
 	return;
@@ -77,8 +84,7 @@ extern "C" VOID WINAPI OnHookRemoved(__in INktHookInfo *lpHookInfo, __in DWORD d
 //		UINT SDKVersion
 //	);
 
-
-extern "C" HRESULT WINAPI OnFunctionCall(__in INktHookInfo *lpHookInfo, __in DWORD dwChainIndex,
+HRESULT WINAPI OnFunctionCall(__in INktHookInfo *lpHookInfo, __in DWORD dwChainIndex,
 	__in INktHookCallInfoPlugin *lpHookCallInfoPlugin)
 {
 	BSTR name;
