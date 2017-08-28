@@ -87,30 +87,6 @@ MY_EXPORT void WINAPI ShowWalls(void)
 // This declaration serves a dual purpose of defining the interface routine as required by
 // DX9, and also is the storage for the original call, returned by nktInProc.Hook
 
-SIZE_T hook_id_SetRenderState;
-STDMETHOD_(HRESULT, pOrigSetRenderState)(IDirect3DDevice9* This,
-	/* [in] */ D3DRENDERSTATETYPE State,
-	/* [in] */ DWORD              Value
-	) = nullptr;
-
-STDMETHODIMP_(HRESULT) Hooked_SetRenderState(IDirect3DDevice9* This, 
-	D3DRENDERSTATETYPE State, DWORD Value)
-{
-//	::OutputDebugStringA("NativePlugin::Hooked_SetRenderState called\n");
-
-	if (State == D3DRS_FILLMODE)
-		Value = gShowWireFrame ?  D3DFILL_WIREFRAME : D3DFILL_SOLID;
-	HRESULT hr = pOrigSetRenderState(This, State, Value);
-
-	return hr;
-}
-
-//-----------------------------------------------------------
-// Interface to implement the hook for IDirect3DDevice9->Present
-
-// This declaration serves a dual purpose of defining the interface routine as required by
-// DX9, and also is the storage for the original call, returned by nktInProc.Hook
-
 SIZE_T hook_id_Present;
 STDMETHOD_(HRESULT, pOrigPresent)(IDirect3DDevice9* This,
 	/* [in] */ const RECT    *pSourceRect,
@@ -128,21 +104,12 @@ STDMETHODIMP_(HRESULT) Hooked_Present(IDirect3DDevice9* This,
 {
 //	::OutputDebugStringA("NativePlugin::Hooked_Present called\n");	// Called too often to log
 
-	// Our actual functionality. 
-	// SetRenderState, based on the global flag. 
-
-	if (gShowWireFrame != gRenderState)
-	{
-		gRenderState = gShowWireFrame;
-
-		HRESULT hr = This->lpVtbl->SetRenderState(This, D3DRS_FILLMODE, gShowWireFrame ? D3DFILL_WIREFRAME : D3DFILL_SOLID);
-		::OutputDebugStringA("SetRenderState:");
-	}
-
 	HRESULT hr = pOrigPresent(This, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion);
 
+	// Our actual functionality. 
+	// SetRenderState, based on the global flag. 
+	// This technique does not actually work very well.
 	This->lpVtbl->SetRenderState(This, D3DRS_FILLMODE, gShowWireFrame ? D3DFILL_WIREFRAME : D3DFILL_SOLID);
-
 
 	return hr;
 }
@@ -185,13 +152,6 @@ STDMETHODIMP_(HRESULT) Hooked_CreateDevice(IDirect3D9* This,
 
 		if (FAILED(dwOsErr))
 			::OutputDebugStringA("Failed to hook IDirect3DDevice9::Present\n");
-
-
-		dwOsErr = nktInProc.Hook(&hook_id_SetRenderState, (void**)&pOrigSetRenderState,
-			game_Device->lpVtbl->SetRenderState, Hooked_SetRenderState, 0);
-
-		if (FAILED(dwOsErr))
-			::OutputDebugStringA("Failed to hook IDirect3DDevice9::SetRenderState\n");
 	}
 
 	return hr;

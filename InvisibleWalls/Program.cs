@@ -119,10 +119,13 @@ namespace InvisibleWalls
                 if (key == ConsoleKey.Insert)
                 {
                     _spyMgr.CallCustomApi(_gameProcess, nativeDLLName, "ShowWireFrame", null, true);
-
+                    Console.WriteLine("Wireframe mode on...");
                 }
                 if (key == ConsoleKey.Delete)
+                {
                     _spyMgr.CallCustomApi(_gameProcess, nativeDLLName, "ShowWalls", null, true);
+                    Console.WriteLine("Solid mode on...");
+                }
 
                 if (key == ConsoleKey.Escape)
                     done = true;
