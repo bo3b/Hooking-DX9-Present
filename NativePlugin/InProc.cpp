@@ -54,13 +54,12 @@
 CNktHookLib nktInProc;
 
 bool gShowWireFrame = false;
-bool gRenderState = false;
 
 
 // --------------------------------------------------------------------------------------------------
 
 // Custom routines for this NativePlugin.dll, that the master app can call to enable or disable
-// the wireframe mode.  These will be called in response to user input.
+// the wireframe mode.  These will be called in response to user input from the master app.
 //	Insert=WireFrame
 //	Delete=Normal
 
@@ -82,6 +81,40 @@ MY_EXPORT void WINAPI ShowWalls(void)
 
 
 //-----------------------------------------------------------
+// Interface to implement the hook for IDirect3DDevice9->SetRenderState
+
+// This declaration serves a dual purpose of defining the interface routine as required by
+// DX9, and also is the storage for the original call, returned by nktInProc.Hook
+
+SIZE_T hook_id_SetRenderState;
+STDMETHOD_(HRESULT, pOrigSetRenderState)(IDirect3DDevice9* This,
+	/* [in] */ D3DRENDERSTATETYPE State,
+	/* [in] */ DWORD              Value
+	) = nullptr;
+
+// The SetRenderState is called for innumerable reasons.  If we are being called
+// for a D3DRS_FILLMODE, we will set the parameter based on the current state.
+// Otherwise we will call through to the original.
+
+// This has the effect of changing the drawing mode to wireframe for a given
+// game.  It does not work very well however.  Most games will be blocked
+// by a full screen quad when showing wireframes.
+
+STDMETHODIMP_(HRESULT) Hooked_SetRenderState(IDirect3DDevice9* This,
+	D3DRENDERSTATETYPE State, DWORD Value)
+{
+//	::OutputDebugStringA("NativePlugin::Hooked_SetRenderState called\n");  // called very often
+
+	if (State == D3DRS_FILLMODE)
+		Value = gShowWireFrame ? D3DFILL_WIREFRAME : D3DFILL_SOLID;
+
+	HRESULT hr = pOrigSetRenderState(This, State, Value);
+
+	return hr;
+}
+
+
+//-----------------------------------------------------------
 // Interface to implement the hook for IDirect3DDevice9->Present
 
 // This declaration serves a dual purpose of defining the interface routine as required by
@@ -97,7 +130,9 @@ STDMETHOD_(HRESULT, pOrigPresent)(IDirect3DDevice9* This,
 
 
 // This is it. The one we are after.  This is the hook for the DX9 Present call
-// which the game will call for every frame.
+// which the game will call for every frame.  
+
+// This is not used in the sample, but shows how it's possible to hook Present.
 
 STDMETHODIMP_(HRESULT) Hooked_Present(IDirect3DDevice9* This,
 	CONST RECT* pSourceRect, CONST RECT* pDestRect, HWND hDestWindowOverride, CONST RGNDATA* pDirtyRegion)
@@ -105,11 +140,6 @@ STDMETHODIMP_(HRESULT) Hooked_Present(IDirect3DDevice9* This,
 //	::OutputDebugStringA("NativePlugin::Hooked_Present called\n");	// Called too often to log
 
 	HRESULT hr = pOrigPresent(This, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion);
-
-	// Our actual functionality. 
-	// SetRenderState, based on the global flag. 
-	// This technique does not actually work very well.
-	This->lpVtbl->SetRenderState(This, D3DRS_FILLMODE, gShowWireFrame ? D3DFILL_WIREFRAME : D3DFILL_SOLID);
 
 	return hr;
 }
@@ -145,13 +175,22 @@ STDMETHODIMP_(HRESULT) Hooked_CreateDevice(IDirect3D9* This,
 
 	if (pOrigPresent == nullptr && SUCCEEDED(hr) && ppReturnedDeviceInterface != nullptr)
 	{
+		DWORD dwOsErr;
 		IDirect3DDevice9* game_Device = *ppReturnedDeviceInterface;
 
-		DWORD dwOsErr = nktInProc.Hook(&hook_id_Present, (void**)&pOrigPresent,
+		// Using the DX9 Device, we can now hook the Present call.
+		dwOsErr = nktInProc.Hook(&hook_id_Present, (void**)&pOrigPresent,
 			game_Device->lpVtbl->Present, Hooked_Present, 0);
 
 		if (FAILED(dwOsErr))
 			::OutputDebugStringA("Failed to hook IDirect3DDevice9::Present\n");
+
+		// And the SetRenderState call.
+		dwOsErr = nktInProc.Hook(&hook_id_SetRenderState, (void**)&pOrigSetRenderState,
+			game_Device->lpVtbl->SetRenderState, Hooked_SetRenderState, 0);
+
+		if (FAILED(dwOsErr))
+			::OutputDebugStringA("Failed to hook IDirect3DDevice9::SetRenderState\n");
 	}
 
 	return hr;
