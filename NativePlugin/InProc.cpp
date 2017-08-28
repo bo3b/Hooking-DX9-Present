@@ -53,6 +53,57 @@
 // is immediately available.
 CNktHookLib nktInProc;
 
+bool gShowWireFrame = false;
+bool gRenderState = false;
+
+
+// --------------------------------------------------------------------------------------------------
+
+// Custom routines for this NativePlugin.dll, that the master app can call to enable or disable
+// the wireframe mode.  These will be called in response to user input.
+//	Insert=WireFrame
+//	Delete=Normal
+
+#define MY_EXPORT extern "C" __declspec(dllexport)
+
+MY_EXPORT void WINAPI ShowWireFrame(void)
+{
+	::OutputDebugString(L"NativePlugin::ShowWireFrame called\n");
+
+	gShowWireFrame = true;
+}
+
+MY_EXPORT void WINAPI ShowWalls(void)
+{
+	::OutputDebugString(L"NativePlugin::ShowWalls called\n");
+
+	gShowWireFrame = false;
+}
+
+
+//-----------------------------------------------------------
+// Interface to implement the hook for IDirect3DDevice9->Present
+
+// This declaration serves a dual purpose of defining the interface routine as required by
+// DX9, and also is the storage for the original call, returned by nktInProc.Hook
+
+SIZE_T hook_id_SetRenderState;
+STDMETHOD_(HRESULT, pOrigSetRenderState)(IDirect3DDevice9* This,
+	/* [in] */ D3DRENDERSTATETYPE State,
+	/* [in] */ DWORD              Value
+	) = nullptr;
+
+STDMETHODIMP_(HRESULT) Hooked_SetRenderState(IDirect3DDevice9* This, 
+	D3DRENDERSTATETYPE State, DWORD Value)
+{
+//	::OutputDebugStringA("NativePlugin::Hooked_SetRenderState called\n");
+
+	if (State == D3DRS_FILLMODE)
+		Value = gShowWireFrame ?  D3DFILL_WIREFRAME : D3DFILL_SOLID;
+	HRESULT hr = pOrigSetRenderState(This, State, Value);
+
+	return hr;
+}
 
 //-----------------------------------------------------------
 // Interface to implement the hook for IDirect3DDevice9->Present
@@ -75,9 +126,23 @@ STDMETHOD_(HRESULT, pOrigPresent)(IDirect3DDevice9* This,
 STDMETHODIMP_(HRESULT) Hooked_Present(IDirect3DDevice9* This,
 	CONST RECT* pSourceRect, CONST RECT* pDestRect, HWND hDestWindowOverride, CONST RGNDATA* pDirtyRegion)
 {
-//	::OutputDebugStringA("Hooked_Present called\n");	// Called too often to log
+//	::OutputDebugStringA("NativePlugin::Hooked_Present called\n");	// Called too often to log
+
+	// Our actual functionality. 
+	// SetRenderState, based on the global flag. 
+
+	if (gShowWireFrame != gRenderState)
+	{
+		gRenderState = gShowWireFrame;
+
+		HRESULT hr = This->lpVtbl->SetRenderState(This, D3DRS_FILLMODE, gShowWireFrame ? D3DFILL_WIREFRAME : D3DFILL_SOLID);
+		::OutputDebugStringA("SetRenderState:");
+	}
 
 	HRESULT hr = pOrigPresent(This, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion);
+
+	This->lpVtbl->SetRenderState(This, D3DRS_FILLMODE, gShowWireFrame ? D3DFILL_WIREFRAME : D3DFILL_SOLID);
+
 
 	return hr;
 }
@@ -106,7 +171,7 @@ STDMETHODIMP_(HRESULT) Hooked_CreateDevice(IDirect3D9* This,
 	UINT Adapter, D3DDEVTYPE DeviceType, HWND hFocusWindow, DWORD BehaviorFlags, D3DPRESENT_PARAMETERS* pPresentationParameters,
 	IDirect3DDevice9** ppReturnedDeviceInterface)
 {
-	::OutputDebugStringA("Hooked_CreateDevice called\n");
+	::OutputDebugStringA("NativePlugin::Hooked_CreateDevice called\n");
 
 	HRESULT hr = pOrigCreateDevice(This, Adapter, DeviceType, hFocusWindow, BehaviorFlags, pPresentationParameters,
 		ppReturnedDeviceInterface);
@@ -120,6 +185,13 @@ STDMETHODIMP_(HRESULT) Hooked_CreateDevice(IDirect3D9* This,
 
 		if (FAILED(dwOsErr))
 			::OutputDebugStringA("Failed to hook IDirect3DDevice9::Present\n");
+
+
+		dwOsErr = nktInProc.Hook(&hook_id_SetRenderState, (void**)&pOrigSetRenderState,
+			game_Device->lpVtbl->SetRenderState, Hooked_SetRenderState, 0);
+
+		if (FAILED(dwOsErr))
+			::OutputDebugStringA("Failed to hook IDirect3DDevice9::SetRenderState\n");
 	}
 
 	return hr;

@@ -106,10 +106,14 @@ namespace InvisibleWalls
             _spyMgr.ResumeProcess(_gameProcess, continueevent);
 
 
+            // Go into the wait loop for exiting this app.  If this exits before the game is quit,
+            // it will cleanly remove all the hooks and leave the game running.
+            
             bool done = false;
             while (!done)
             {
-                // This will block the apps thread until a key is pressed.
+                // This will block the app thread until a key is pressed.
+                // This will only be active when this app is in the foreground.  
                 ConsoleKey key = Console.ReadKey().Key;
 
                 if (key == ConsoleKey.Insert)
