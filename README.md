@@ -31,11 +31,15 @@ or graphics programmers. This is only setup for DX9 and x86, but could be extend
 
 <br>
 
-To test, download the repo and build.  It was built with VS2013, but should work with 
-any version.  All required pieces are included here, including DLL binaries for Deviare.
-
-Launch any DX9 x86 game by passing the game path on the command line.
-
+To test:
+1. Download the repo and build.  It was built with VS2013, but should work with 
+any version.  
+1. All required pieces are included here, including DLL binaries for Deviare in the Dependencies folder.
+1. Register the DeviareCOM.DLL with the OS.  
+  1. Navigate to the Dependencies folder with an elevated cmd line window.
+  1. Execute *regsvr32 DeviareCOM.DLL*
+1. Launch any DX9 x86 game by passing a full game path on the command line.
+1. Use Insert key to enable WireFrame, Delete key to disable.
 
 <br>
 
