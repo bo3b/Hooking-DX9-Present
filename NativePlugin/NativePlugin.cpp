@@ -110,3 +110,25 @@ extern "C" HRESULT WINAPI OnFunctionCall(__in INktHookInfo *lpHookInfo, __in DWO
 
 	return S_OK;
 }
+
+
+// --------------------------------------------------------------------------------------------------
+
+// Custom routines for this NativePlugin.dll, that the master app can call to enable or disable
+// the wireframe mode.  These will be called in response to user input.
+//	Insert=WireFrame
+//	Delete=Normal
+
+#define MY_EXPORT extern "C" __declspec(dllexport)
+
+MY_EXPORT void WINAPI ShowWireFrame(void)
+{
+	::OutputDebugString(L"NativePlugin::ShowWireFrame called\n");
+}
+
+MY_EXPORT void WINAPI ShowWalls(void)
+{
+	::OutputDebugString(L"NativePlugin::ShowWalls called\n");
+
+}
+

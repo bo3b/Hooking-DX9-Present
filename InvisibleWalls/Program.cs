@@ -35,12 +35,13 @@ namespace InvisibleWalls
         {
             int hresult;
             object continueevent;
-            string game;
+            string nativeDLLName = Environment.CurrentDirectory + @"\NativePlugin.dll";
+            string game = @"G:\Games\The Ball\Binaries\Win32\theball.exe";
 
-            if (args.Length == 0)
-                game = @"G:\Games\The Ball\Binaries\Win32\theball.exe";
-            else
+            // Default game can be overridden by any game path at command line.
+            if (args.Length != 0)
                 game = args[0];
+
 
             // Setup and Init the primary Deviare interface of the SpyMgr.  This is
             // declared static because we only ever want one.  
@@ -53,16 +54,12 @@ namespace InvisibleWalls
             if (hresult != 0)
                 throw new Exception("Deviare initialization error.");
 
-            // For any hook that is called using this SpyMgr, let us know here.
-            // This is not nec
-
-            _spyMgr.OnFunctionCalled += new DNktSpyMgrEvents_OnFunctionCalledEventHandler(OnFunctionCalled);
-
             // We must set the game directory specifically, otherwise it winds up being the 
             // C# app directory which can make the game crash.  This must be done before CreateProcess.
+            // This also changes the working directory, which will break Deviare's ability to find
+            // the NativePlugin, so we'll use full path descriptions for the DLL load.
 
             Directory.SetCurrentDirectory(Path.GetDirectoryName(game));
-
 
             // Launch the game, but suspended, so we can hook our first call and be certain to catch it.
 
@@ -73,8 +70,9 @@ namespace InvisibleWalls
 
             // Load the NativePlugin for the C++ side.  The NativePlugin must be in this app folder.
 
-            Console.WriteLine("Load NativePlugin...");
-            int result = _spyMgr.LoadCustomDll(_gameProcess, @".\NativePlugin.dll", true, true);
+            Console.WriteLine("Load NativePlugin... " + nativeDLLName);
+            _spyMgr.LoadAgent(_gameProcess);
+            int result = _spyMgr.LoadCustomDll(_gameProcess, nativeDLLName, true, true);
             if (result < 0)
                 throw new Exception("Could not load NativePlugin DLL.");
 
@@ -84,8 +82,8 @@ namespace InvisibleWalls
 
             Console.WriteLine("Hook the D3D9.DLL!Direct3DCreate9...");
             NktHook d3dHook = _spyMgr.CreateHook("D3D9.DLL!Direct3DCreate9",
-                (int)(eNktHookFlags.flgRestrictAutoHookToSameExecutable | 
-                eNktHookFlags.flgOnlyPostCall | 
+                (int)(eNktHookFlags.flgRestrictAutoHookToSameExecutable |
+                eNktHookFlags.flgOnlyPostCall |
                 eNktHookFlags.flgDontCheckAddress));
             if (d3dHook == null)
                 throw new Exception("Failed to hook D3D9.DLL!Direct3DCreate9");
@@ -93,7 +91,7 @@ namespace InvisibleWalls
             // Make sure the CustomHandler in the NativePlugin at OnFunctionCall gets called when this 
             // object is created. At that point, the native code will take over.
 
-            d3dHook.AddCustomHandler(@".\NativePlugin.dll", (int)eNktHookCustomHandlerFlags.flgChDontCallIfLoaderLocked, "");
+            d3dHook.AddCustomHandler(nativeDLLName, (int)eNktHookCustomHandlerFlags.flgChDontCallIfLoaderLocked, "");
 
             // Finally attach and activate the hook in the game process.
 
@@ -108,39 +106,23 @@ namespace InvisibleWalls
             _spyMgr.ResumeProcess(_gameProcess, continueevent);
 
 
-            while (true)
+            bool done = false;
+            while (!done)
             {
-                System.Threading.Thread.Sleep(1000);
-            }
-        }
+                // This will block the apps thread until a key is pressed.
+                ConsoleKey key = Console.ReadKey().Key;
 
-        // This OnFunctionCalled is not necessary for the sample, but demonstrates how the hook can 
-        // simultaneously call here in C#, and in C++ in the NativePlugin.
-        static void OnFunctionCalled(NktHook hook, NktProcess process, NktHookCallInfo hookCallInfo)
-        {
-
-            string strOnFunctionCalled = hook.FunctionName + "\n";
-
-            if (hook.FunctionName.CompareTo("D3D9.DLL!CreateDevice") == 0)
-            {
-                INktParamsEnum paramsEnum = hookCallInfo.Params();
-
-                INktParam param = paramsEnum.First();
-
-                INktParam tempParam = null;
-
-                while (param != null)
+                if (key == ConsoleKey.Insert)
                 {
-                    tempParam = param;
+                    _spyMgr.CallCustomApi(_gameProcess, nativeDLLName, "ShowWireFrame", null, true);
 
-                    param = paramsEnum.Next();
                 }
+                if (key == ConsoleKey.Delete)
+                    _spyMgr.CallCustomApi(_gameProcess, nativeDLLName, "ShowWalls", null, true);
 
-                strOnFunctionCalled += " " + tempParam.PointerVal.ToString() + "\n";
-
+                if (key == ConsoleKey.Escape)
+                    done = true;
             }
-
-            Console.WriteLine(strOnFunctionCalled);
         }
     }
 }
