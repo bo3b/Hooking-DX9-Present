@@ -46,7 +46,7 @@ namespace InvisibleWalls
             int hresult;
             object continueevent;
             string nativeDLLName = Environment.CurrentDirectory + @"\NativePlugin.dll";
-            string game = @"G:\Games\The Ball\Binaries\Win32\theball.exe";
+            string game = @"W:\Games\The Ball\Binaries\Win32\theball.exe";
 
             // Default game can be overridden by any game path at command line.
             if (args.Length != 0)

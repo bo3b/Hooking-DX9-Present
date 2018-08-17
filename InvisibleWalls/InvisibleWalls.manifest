@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- Here is the manifest we use to support Deviare in the x86 platform: -->
+
+<asmv1:assembly manifestVersion="1.0" 
+                xmlns="urn:schemas-microsoft-com:asm.v1" 
+                xmlns:asmv1="urn:schemas-microsoft-com:asm.v1" 
+                xmlns:asmv2="urn:schemas-microsoft-com:asm.v2" 
+                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+  <assemblyIdentity version="1.0.0.0" name="InvisibleWalls" processorArchitecture="x86" />
+
+  <dependency>
+    <dependentAssembly>
+      <assemblyIdentity type="win32" name="DeviareCOM" version="2.0.0.0" processorArchitecture="x86" />"
+    </dependentAssembly>
+  </dependency>
+
+</asmv1:assembly>
