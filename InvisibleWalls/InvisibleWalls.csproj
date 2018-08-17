@@ -54,7 +54,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>xcopy $(SolutionDir)Dependencies $(OutDir) /C /Y</PostBuildEvent>
+    <PostBuildEvent>xcopy "$(SolutionDir)Deviare2 Dependencies" $(OutDir) /C /Y</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

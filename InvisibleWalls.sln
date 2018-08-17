@@ -1,23 +1,26 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.40629.0
+# Visual Studio 15
+VisualStudioVersion = 15.0.27703.2047
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InvisibleWalls", "InvisibleWalls\InvisibleWalls.csproj", "{97BA2ED9-2467-44CF-A28F-440F5A745D12}"
+	ProjectSection(ProjectDependencies) = postProject
+		{4E087F78-9ADB-4B15-BD41-461EF6D322CC} = {4E087F78-9ADB-4B15-BD41-461EF6D322CC}
+	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Dependencies", "Dependencies", "{B7307687-52A8-419B-8B96-862B7345E33A}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Deviare2 Dependencies", "Deviare2 Dependencies", "{B7307687-52A8-419B-8B96-862B7345E33A}"
 	ProjectSection(SolutionItems) = preProject
-		Dependencies\deviare32.db = Dependencies\deviare32.db
-		Dependencies\deviare64.db = Dependencies\deviare64.db
-		Dependencies\DeviareCOM.dll = Dependencies\DeviareCOM.dll
-		Dependencies\DeviareCOM.pdb = Dependencies\DeviareCOM.pdb
-		Dependencies\DeviareCOM64.dll = Dependencies\DeviareCOM64.dll
-		Dependencies\DeviareCOM64.pdb = Dependencies\DeviareCOM64.pdb
-		Dependencies\DvAgent.dll = Dependencies\DvAgent.dll
-		Dependencies\DvAgent.pdb = Dependencies\DvAgent.pdb
-		Dependencies\DvAgent64.dll = Dependencies\DvAgent64.dll
-		Dependencies\DvAgent64.pdb = Dependencies\DvAgent64.pdb
-		Dependencies\Nektra.Deviare2.dll = Dependencies\Nektra.Deviare2.dll
+		Deviare2 Dependencies\deviare32.db = Deviare2 Dependencies\deviare32.db
+		Deviare2 Dependencies\deviare64.db = Deviare2 Dependencies\deviare64.db
+		Deviare2 Dependencies\DeviareCOM.dll = Deviare2 Dependencies\DeviareCOM.dll
+		Deviare2 Dependencies\DeviareCOM.pdb = Deviare2 Dependencies\DeviareCOM.pdb
+		Deviare2 Dependencies\DeviareCOM64.dll = Deviare2 Dependencies\DeviareCOM64.dll
+		Deviare2 Dependencies\DeviareCOM64.pdb = Deviare2 Dependencies\DeviareCOM64.pdb
+		Deviare2 Dependencies\DvAgent.dll = Deviare2 Dependencies\DvAgent.dll
+		Deviare2 Dependencies\DvAgent.pdb = Deviare2 Dependencies\DvAgent.pdb
+		Deviare2 Dependencies\DvAgent64.dll = Deviare2 Dependencies\DvAgent64.dll
+		Deviare2 Dependencies\DvAgent64.pdb = Deviare2 Dependencies\DvAgent64.pdb
+		Deviare2 Dependencies\Nektra.Deviare2.dll = Deviare2 Dependencies\Nektra.Deviare2.dll
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NativePlugin", "NativePlugin\NativePlugin.vcxproj", "{4E087F78-9ADB-4B15-BD41-461EF6D322CC}"
@@ -25,6 +28,19 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{CD7C9FA9-6092-4233-8E3D-F47D9E46F1F7}"
 	ProjectSection(SolutionItems) = preProject
 		README.md = README.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "In-Proc Dependencies", "In-Proc Dependencies", "{1361B9CE-E0EF-4545-8D80-C49463449845}"
+	ProjectSection(SolutionItems) = preProject
+		NativePlugin\In-Proc Dependencies\NktHookLib.h = NativePlugin\In-Proc Dependencies\NktHookLib.h
+		NativePlugin\In-Proc Dependencies\NktHookLib.lib = NativePlugin\In-Proc Dependencies\NktHookLib.lib
+		NativePlugin\In-Proc Dependencies\nkthooklib.pdb = NativePlugin\In-Proc Dependencies\nkthooklib.pdb
+		NativePlugin\In-Proc Dependencies\NktHookLib64.lib = NativePlugin\In-Proc Dependencies\NktHookLib64.lib
+		NativePlugin\In-Proc Dependencies\nkthooklib64.pdb = NativePlugin\In-Proc Dependencies\nkthooklib64.pdb
+		NativePlugin\In-Proc Dependencies\NktHookLib64_Debug.lib = NativePlugin\In-Proc Dependencies\NktHookLib64_Debug.lib
+		NativePlugin\In-Proc Dependencies\nkthooklib64_debug.pdb = NativePlugin\In-Proc Dependencies\nkthooklib64_debug.pdb
+		NativePlugin\In-Proc Dependencies\NktHookLib_Debug.lib = NativePlugin\In-Proc Dependencies\NktHookLib_Debug.lib
+		NativePlugin\In-Proc Dependencies\nkthooklib_debug.pdb = NativePlugin\In-Proc Dependencies\nkthooklib_debug.pdb
 	EndProjectSection
 EndProject
 Global
@@ -64,5 +80,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {0F43BD25-47B5-41AC-B7D9-F03871504E6E}
 	EndGlobalSection
 EndGlobal

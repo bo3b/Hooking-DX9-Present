@@ -39,7 +39,6 @@ dlldata.c
 *.meta
 *.obj
 *.pch
-*.pdb
 *.pgc
 *.pgd
 *.rsp
@@ -187,4 +186,6 @@ FakesAssemblies/
 GeneratedArtifacts/
 _Pvt_Extensions/
 ModelManifest.xml
-/.vs/InvisibleWalls/v15
+
+# Project specific
+/.vs/
