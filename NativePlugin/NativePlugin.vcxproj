@@ -42,11 +42,13 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)Dependencies;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)Deviare2 Dependencies;$(ProjectDir)In-Proc Dependencies;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)In-Proc Dependencies;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(SolutionDir)Dependencies;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)Deviare2 Dependencies;$(ProjectDir)In-Proc Dependencies;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)In-Proc Dependencies;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -90,7 +92,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="NativePlugin.h" />
-    <ClInclude Include="NktHookLib.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="InProc.cpp">

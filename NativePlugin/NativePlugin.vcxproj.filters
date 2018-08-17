@@ -6,7 +6,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="NativePlugin.h" />
-    <ClInclude Include="NktHookLib.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="NativePlugin.def" />
