@@ -21,6 +21,7 @@ override a parameter.
 This sample is intended to demonstrate several things that are useful to DX9
 or graphics programmers. This is only setup for DX9 and x86, but could be extended for either x64 or DX11.
 
+This sample demonstrates:
  1) Setting up a mixed environment of C# and Native C++
  2) Using a Nektra CustomDLL for hooking.
  3) Mixed use of In-Proc hooking, and Deviare hooking.
@@ -32,18 +33,15 @@ or graphics programmers. This is only setup for DX9 and x86, but could be extend
 <br>
 
 To test:
-1. Download the repo and build.  It was built with VS2013, but should work with 
+1. Download the repo and build.  It was built with VS2017, but should work with 
 any version.  
 1. All required pieces are included here, including DLL binaries for Deviare in the Dependencies folder.
-1. Register the DeviareCOM.DLL with the OS.  
-  1. Navigate to the Dependencies folder with an elevated cmd line window.
-  1. Execute *regsvr32 DeviareCOM.DLL*
 1. Launch any DX9 x86 game by passing a full game path on the command line.
 1. Use Insert key to enable WireFrame, Delete key to disable.
 
 <br>
 
-Written by Bo3b Johnson, August 2017.  
+Written by Bo3b Johnson, August 2017.  Updated to VS2017 and RegFreeCOM on August 2018.
  This code is MIT license, free for any use.
  Deviare and Nektra In-Proc are used here via their GPL 3 license.
 
